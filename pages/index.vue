@@ -2,16 +2,16 @@
   <div class="flex flex-col h-screen">
     <!-- Top Navigation -->
     <div class="box">
-      <div class="flex flex-row justify-between items-center">
-        <div class="logo p-4">
+      <div class="flex flex-row justify-between items-center flex-wrap">
+        <div class="logo p-4 sm:py-2 lg:p-4">
           <p class="text-4xl header-text-bold text-gray-800">useNetFlux</p>
           <p>A powerful network composable & light-weight API playground</p>
         </div>
-        <div class="menu p-4">
+        <div class="menu p-4 sm:py-2 lg:p-4 ">
           <ul class="flex flex-row">
             <div v-for="(menuOption, index) in menuItems">
               <div
-                :class="`box button p-4 m-1 ${
+                :class="`box button p-4 mr-1 ${
                   menuOption.title === currentTab.title
                     ? 'text-teal-400 bg-slate-700'
                     : ''
@@ -34,8 +34,8 @@
           class="box absolute inset-0 overflow-y-scroll"
         >
           <!-- Conditional rendering based on currentTab -->
-          <div v-if="currentTab.title === 'Playground'" class="p-4">
-            <p class="px-2">
+          <div v-if="currentTab.title === 'Playground'">
+            <p class="">
               <Playground></Playground>
             </p>
           </div>

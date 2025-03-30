@@ -4,9 +4,9 @@
         <p>Enter a custom endpoint with "https://" included.</p>
         <p>Current default endpoint is 'https://dummyjson.com/products'</p>
         <div class="method-menu">
-            <input type="text" v-model="playgroundStoreOpt.endpoint">
-                <button @click="playgroundStoreOpt.handleTestButton()" class="m-2">
-                    Test
+            <input type="text" class="w-80" v-model="playgroundStoreOpt.endpoint">
+                <button @click="playgroundStoreOpt.handleTestButton()" class="m-0 sm:m-0 lg:m-2">
+                    Send
                 </button>
             </input>
         </div>

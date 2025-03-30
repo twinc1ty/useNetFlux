@@ -68,6 +68,7 @@ export const usePlaygroundStoreOpt = defineStore("playground", () => {
   const currentHttpsMethod = ref<HttpMethod>("GET");
   const endpoint = ref<string>("https://dummyjson.com/products/1");
   const response = ref<any>({});
+  const formattedResponse = ref<string>('');
   const responseState = ref<APIState>({
     status: "idle",
     message: "Response State",
@@ -104,9 +105,10 @@ export const usePlaygroundStoreOpt = defineStore("playground", () => {
     });
 
     if (response.value) {
-      if (!playgroundMainMenu.value[3].isVisible) {
-        playgroundMainMenu.value[3].isVisible = true;
+      if (!playgroundMainMenu.value[4].isVisible) {
+        playgroundMainMenu.value[4].isVisible = true;
       }
+      formattedResponse.value = JSON.stringify(response.value, null, 2);
     }
   };
 
@@ -142,6 +144,7 @@ export const usePlaygroundStoreOpt = defineStore("playground", () => {
     removeHeader,
     saveHeader,
     newHeaderCreationActive,
-    toggleNewHeaderCreation
+    toggleNewHeaderCreation,
+    formattedResponse
   };
 });
