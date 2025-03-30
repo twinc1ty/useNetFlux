@@ -25,7 +25,7 @@
         <div class="method-menu">
             <input type="text" v-model="endpointInputModel">
             <button @click="handlePlayClick">
-                Test
+                Test asdasd
             </button>
             </input>
         </div>
@@ -74,10 +74,9 @@ const handlePlayClick = async () => {
 
 </script>
 
-<style>
+<style scoped>
 .box {
     border: 1px solid black;
-    padding: 0.5em;
 }
 
 .method-container {

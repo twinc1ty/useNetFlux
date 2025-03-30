@@ -1,10 +1,10 @@
 <template>
     <div class="method-container">
-        <div class="menu flex flex-row justify-between items-center">
-            <div class="main-menu">
-                <div class="flex flex-row">
+        <div class="menu flex flex-row justify-between items-center flex-wrap">
+            <div class="main-menu overflow-x-auto">
+                <div class="flex flex-row whitespace-nowrap">
                     <div v-for="(menuItem, index) in playgroundStoreOpt.playgroundMainMenu">
-                        <div :class="`box m-1 button ${menuItem.isVisible ? 'text-teal-400 bg-slate-700' : ''}`"
+                        <div :class="`box m-1 button p-2 sm:p-1 lg:p-3 ${menuItem.isVisible ? 'text-teal-400 bg-slate-700' : ''}`"
                             @click="playgroundStoreOpt.toggleOptionView(index)">
                             <span>
                                 {{ menuItem.title }}
@@ -70,7 +70,15 @@ const handlePlayClick = async () => {
 <style>
 .box {
     border: 1px solid black;
-    padding: 0.5em;
+}
+
+.main-menu {
+    overflow-x: auto; /* Enable horizontal scrolling */
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+}
+
+.main-menu::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in WebKit browsers (Chrome, Safari, Edge) */
 }
 
 .method-container {
@@ -116,7 +124,7 @@ input {
     border: 0;
     padding: 0 1em 0 1em;
     height: 2em;
-    width: 40%;
+    /* width: 40%; */
     font-size: 14px;
     color: blueviolet;
     background-color: rgb(181, 181, 181);
@@ -124,9 +132,9 @@ input {
 
 button {
     border: none;
-    width: 10%;
+    width: auto;
     text-align: center;
-    padding: 0.3em;
+    padding: 0.3em 0.5em 0.3em 0.5em;
     font-weight: 600;
     background-color: rgb(98, 171, 147);
     color: aliceblue;

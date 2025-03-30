@@ -1,7 +1,7 @@
 <template>
   <div class="method-container">
     <p class="text-2xl bold my-2">Configure Headers & Body</p>
-    <div class="flex justify-around">
+    <div class="flex justify-around flex-wrap">
       <div class="box">
         <header class="flex items-center justify-between">
           <p class="text-xl font-bold">Add/Remove Headers</p>
@@ -16,7 +16,7 @@
           :key="index"
           class="my-3"
         >
-          <div class="flex justify-between">
+          <div class="flex items-center justify-between">
             <!-- <label>{{ key }}:</label> -->
             <label class="text-sm font-bold">{{ key }}:</label>
             <!-- <input type="text" class="" v-model="playgroundStoreOpt.headers[key]" /> -->
@@ -24,7 +24,7 @@
             <div class="flex items-center justify-between">
               <input
                 type="text"
-                class="w-60 mr-1"
+                class="w-30 sm:w-30 lg:w-60 mr-1"
                 v-model="playgroundStoreOpt.headers[key]"
               />
               <button @click="playgroundStoreOpt.removeHeader(key)">-</button>
@@ -36,13 +36,13 @@
             <input
               placeholder="Key"
               type="text"
-              class="w-60 mr-1"
+              class="w-40 sm:w-40 lg:w-80 mr-1"
               v-model="newHeaderKeyModel"
             />
             <input
               placeholder="Value"
               type="text"
-              class="w-60 mr-1"
+              class="w-40 sm:w-40 lg:w-80 mr-1"
               v-model="newHeaderValueModel"
             />
           </div>

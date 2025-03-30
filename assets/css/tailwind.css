@@ -4,6 +4,6 @@
 
 @layer utilities {
   .box {
-    @apply mt-2 border-2 border-slate-400;
+    @apply mt-2 border-2 border-slate-400 p-3 sm:p-0.5 lg:p-3;
   }
 }
