@@ -1,150 +1,235 @@
-import APIMethod from "~/components/APIMethod.vue";
-import GlobalConfig from "~/components/GlobalConfig.vue";
-import Response from "~/components/Response.vue";
-import HeaderBodyConfig from "~/components/HeaderBodyConfig.vue";
-import { useNetFlux, type HttpMethod } from "~/composable/useNetFlux";
-import APIEndpointSetup from "~/components/APIEndpointSetup.vue";
-import type { APIState } from "~/types/api-state.type";
-import { markRaw, shallowRef } from "vue";
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { useNetFlux, type HttpMethod, type ApiResponse } from "~/composable/useNetFlux";
 
+export type RequestTab = "params" | "headers" | "body" | "settings";
+export type ResponseTab = "pretty" | "raw" | "headers";
 
-type PlayGroundMenuOption = {
-  title: string;
-  isVisible: boolean;
-  component: Component;
-};
+export interface KeyValueRow {
+  id: string;
+  key: string;
+  value: string;
+  enabled: boolean;
+}
 
-const initPlaygroundMainMenu: PlayGroundMenuOption[] = [
-  {
-    title: "Configure Globals",
-    isVisible: false,
-    component: markRaw(GlobalConfig),
-  },
-  {
-    title: "Configure Method Type",
-    isVisible: true,
-    component: markRaw(APIMethod),
-  },
-  {
-    title: "Configure Headers & Body",
-    isVisible: true,
-    component: markRaw(HeaderBodyConfig),
-  },
-  {
-    title: "Configure Endpoint",
-    isVisible: true,
-    component: markRaw(APIEndpointSetup),
-  },
-  {
-    title: "Response",
-    isVisible: false,
-    component: markRaw(Response),
-  },
-];
+export interface HistoryItem {
+  id: string;
+  method: HttpMethod;
+  url: string;
+  timestamp: Date;
+  status?: number;
+  statusText?: string;
+  responseTime?: number;
+  ok?: boolean;
+  response?: ApiResponse;
+}
 
 export const usePlaygroundStoreOpt = defineStore("playground", () => {
-  /**
-   * Constants & Composables
-   */
   const { executeCall, updateGlobalConfig } = useNetFlux();
 
-  /**
-   * States
-   */
-  const playgroundMainMenu = ref<PlayGroundMenuOption[]>([...initPlaygroundMainMenu]);
-
-  const headers = ref<Record<string, string>>({
-    "Content-Type": "application/json",
-  });
-  const body = ref<string>("");
-
-  const httpMethods = ref<HttpMethod[]>([
-    "GET",
-    "POST",
-    "DELETE",
-    "PUT",
-    "PATCH",
+  // Request state
+  const endpoint = ref("https://dummyjson.com/products/1");
+  const method = ref<HttpMethod>("GET");
+  const queryParams = ref<KeyValueRow[]>([]);
+  const headers = ref<KeyValueRow[]>([
+    { id: "h1", key: "Content-Type", value: "application/json", enabled: true },
+    { id: "h2", key: "Accept", value: "application/json", enabled: true },
   ]);
-  const currentHttpsMethod = ref<HttpMethod>("GET");
-  const endpoint = ref<string>("https://dummyjson.com/products/1");
-  const response = ref<any>({});
-  const formattedResponse = ref<string>('');
-  const responseState = ref<APIState>({
-    status: "idle",
-    message: "Response State",
-    data: {},
+  const body = ref("");
+
+  // UI state
+  const activeRequestTab = ref<RequestTab>("params");
+  const activeResponseTab = ref<ResponseTab>("pretty");
+  const isLoading = ref(false);
+  const methodDropdownOpen = ref(false);
+  const historyOpen = ref(true);
+
+  // Response state
+  const response = ref<ApiResponse | null>(null);
+  const requestError = ref<string | null>(null);
+
+  // Request history (most recent first, max 50)
+  const requestHistory = ref<HistoryItem[]>([]);
+
+  // Per-request settings (mirrors defaultConfig)
+  const settings = ref({
+    timeout: 5000,
+    retries: 3,
+    retryDelay: 1000,
+    cacheDuration: 0,
+    skipCache: true,
+    async: false,
+    override: false,
+    logging: true,
   });
 
-  const newHeaderCreationActive = ref(false);
+  const httpMethods: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
-  /**
-   * Methods & Functions
-   */
-  const toggleOptionView = (menuItemIndex: number) => {
-     
-    playgroundMainMenu.value[menuItemIndex].isVisible =
-      !playgroundMainMenu.value[menuItemIndex].isVisible;
+  const methodMeta: Record<HttpMethod, { color: string; bg: string; border: string }> = {
+    GET:    { color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
+    POST:   { color: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/30" },
+    PUT:    { color: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/30" },
+    PATCH:  { color: "text-purple-400",  bg: "bg-purple-500/10",  border: "border-purple-500/30" },
+    DELETE: { color: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/30" },
   };
 
-  const handleMethodTabClick = (methodIndex: number) => {
-    if (currentHttpsMethod.value !== httpMethods.value[methodIndex]) {
-      currentHttpsMethod.value = httpMethods.value[methodIndex];
+  const hasBody = computed(() => ["POST", "PUT", "PATCH", "DELETE"].includes(method.value));
+  const activeParamsCount = computed(() => queryParams.value.filter(p => p.enabled && p.key).length);
+  const activeHeadersCount = computed(() => headers.value.filter(h => h.enabled && h.key).length);
+
+  const enabledHeaders = computed(() =>
+    headers.value
+      .filter(h => h.enabled && h.key)
+      .reduce((acc, h) => ({ ...acc, [h.key]: h.value }), {} as Record<string, string>)
+  );
+
+  const enabledQueryParams = computed(() =>
+    queryParams.value
+      .filter(p => p.enabled && p.key)
+      .reduce((acc, p) => ({ ...acc, [p.key]: p.value }), {} as Record<string, string>)
+  );
+
+  function addQueryParam() {
+    queryParams.value.push({ id: Date.now().toString(), key: "", value: "", enabled: true });
+  }
+
+  function removeQueryParam(id: string) {
+    queryParams.value = queryParams.value.filter(p => p.id !== id);
+  }
+
+  function addHeader() {
+    headers.value.push({ id: Date.now().toString(), key: "", value: "", enabled: true });
+  }
+
+  function removeHeader(id: string) {
+    headers.value = headers.value.filter(h => h.id !== id);
+  }
+
+  function setMethod(m: HttpMethod) {
+    method.value = m;
+    methodDropdownOpen.value = false;
+    if (m === "GET" && activeRequestTab.value === "body") {
+      activeRequestTab.value = "params";
     }
-  };
+  }
 
-  const handleTestButton = async () => {
-    response.value = await executeCall({
-      apiRequest: {
-        headers: headers.value,
-        endpoint: endpoint.value,
-        // send body only if method is not GET
-        body: currentHttpsMethod.value !== "GET" ? body.value : undefined,
-        method: currentHttpsMethod.value as HttpMethod,
-      },
-      skipCache: false,
-    });
+  function loadFromHistory(item: HistoryItem) {
+    endpoint.value = item.url;
+    method.value = item.method;
+    requestError.value = null;
+    response.value = item.response ?? null;
+    if (item.response) activeResponseTab.value = "pretty";
+  }
 
-    if (response.value) {
-      if (!playgroundMainMenu.value[4].isVisible) {
-        playgroundMainMenu.value[4].isVisible = true;
+  function clearHistory() {
+    requestHistory.value = [];
+  }
+
+  // Keep globalConfig.logging in sync with settings
+  watch(() => settings.value.logging, (val) => {
+    updateGlobalConfig({ logging: val });
+  });
+
+  async function sendRequest() {
+    if (!endpoint.value.trim()) return;
+
+    isLoading.value = true;
+    response.value = null;
+    requestError.value = null;
+
+    let parsedBody: any = undefined;
+    if (hasBody.value && body.value.trim()) {
+      try {
+        parsedBody = JSON.parse(body.value);
+      } catch {
+        parsedBody = body.value;
       }
-      formattedResponse.value = JSON.stringify(response.value, null, 2);
     }
-  };
 
-  const toggleNewHeaderCreation = () => {
-    newHeaderCreationActive.value = !newHeaderCreationActive.value;
-  }
+    try {
+      const result = await executeCall({
+        apiRequest: {
+          method: method.value,
+          endpoint: endpoint.value.trim(),
+          headers: enabledHeaders.value,
+          queryParams: enabledQueryParams.value,
+          body: parsedBody,
+        },
+        timeout: settings.value.timeout,
+        retries: settings.value.retries,
+        retryDelay: settings.value.retryDelay,
+        cacheDuration: settings.value.cacheDuration,
+        skipCache: settings.value.skipCache,
+        async: settings.value.async,
+        override: settings.value.override,
+      });
 
-  const addNewHeader = (key: string, value: string) => {
-    if (key && value) {
-      headers.value[key] = value;
+      response.value = result;
+      activeResponseTab.value = "pretty";
+
+      if (!result.fromCache) {
+        requestHistory.value.unshift({
+          id: Date.now().toString(),
+          method: method.value,
+          url: endpoint.value.trim(),
+          timestamp: new Date(),
+          status: result.status,
+          statusText: result.statusText,
+          responseTime: result.responseTime,
+          ok: result.ok,
+          response: result,
+        });
+      }
+
+      if (requestHistory.value.length > 50) {
+        requestHistory.value = requestHistory.value.slice(0, 50);
+      }
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        requestError.value = err.message || "Request failed";
+        requestHistory.value.unshift({
+          id: Date.now().toString(),
+          method: method.value,
+          url: endpoint.value.trim(),
+          timestamp: new Date(),
+          ok: false,
+        });
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
-  
-  const removeHeader = (key: string) => {
-    if (headers.value[key]) {
-      delete headers.value[key];
-    }
-  }
-  const saveHeader = () => {}
 
   return {
-    playgroundMainMenu,
-    httpMethods,
-    currentHttpsMethod,
     endpoint,
-    response,
-    toggleOptionView,
-    handleMethodTabClick,
-    handleTestButton,
+    method,
+    queryParams,
     headers,
     body,
-    addNewHeader,
+    activeRequestTab,
+    activeResponseTab,
+    isLoading,
+    methodDropdownOpen,
+    historyOpen,
+    response,
+    requestError,
+    requestHistory,
+    settings,
+    httpMethods,
+    methodMeta,
+    hasBody,
+    activeParamsCount,
+    activeHeadersCount,
+    enabledHeaders,
+    enabledQueryParams,
+    addQueryParam,
+    removeQueryParam,
+    addHeader,
     removeHeader,
-    saveHeader,
-    newHeaderCreationActive,
-    toggleNewHeaderCreation,
-    formattedResponse
+    setMethod,
+    loadFromHistory,
+    clearHistory,
+    sendRequest,
+    updateGlobalConfig,
   };
 });

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-slate-300 h-[100vh] w-[100vw] lg:px-10 sm:px-5 px-2">
+  <div class="bg-slate-950 h-[100vh] w-[100vw] overflow-hidden">
     <NuxtPage></NuxtPage>  
   </div>
 </template>
