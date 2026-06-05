@@ -312,6 +312,8 @@
 <script setup lang="ts">
 import { usePlaygroundStoreOpt } from "~/stores/playground-opt.store";
 
+definePageMeta({ ssr: false });
+
 const store = usePlaygroundStoreOpt();
 const copied = ref(false);
 

@@ -112,7 +112,9 @@
 
         <!-- Playground tab -->
         <div v-else key="playground" class="absolute inset-0 overflow-hidden">
-          <Playground />
+          <ClientOnly>
+            <Playground />
+          </ClientOnly>
         </div>
 
       </Transition>
