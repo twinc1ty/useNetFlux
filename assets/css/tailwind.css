@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .header-text-regular {
+    font-family: "Questrial", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .header-text-bold {
+    font-family: "Questrial", sans-serif;
+    font-weight: 800;
+    font-style: normal;
+  }
+}
+
 @layer utilities {
   .box {
     @apply mt-2 border-2 border-slate-400 p-3 sm:p-0.5 lg:p-3;

@@ -111,10 +111,17 @@
         </div>
 
         <!-- Playground tab -->
-        <div v-else key="playground" class="absolute inset-0 overflow-hidden">
+        <div v-else-if="currentTab === 'Playground'" key="playground" class="absolute inset-0 overflow-hidden">
           <ClientOnly>
             <Playground />
           </ClientOnly>
+        </div>
+
+        <!-- Documentation tab -->
+        <div v-else key="documentation" class="absolute inset-0 overflow-y-auto">
+          <div class="max-w-4xl mx-auto px-6 py-10">
+            <ContentRenderer v-if="doc" :value="doc" class="docs-content" />
+          </div>
         </div>
 
       </Transition>
@@ -126,8 +133,12 @@
 <script setup lang="ts">
 import Playground from "./playground.vue";
 
-const menuItems = [{ title: "Home" }, { title: "Playground" }];
+const menuItems = [{ title: "Home" }, { title: "Playground" }, { title: "Documentation" }];
 const currentTab = ref("Home");
+
+const { data: doc } = await useAsyncData("documentation", () =>
+  queryContent("/documentation").findOne()
+);
 
 const features = [
   { label: "Request Queue", desc: "Prevent duplicate concurrent requests", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>` },
@@ -153,5 +164,71 @@ const features = [
 .slide-leave-to {
   transform: translateX(-24px);
   opacity: 0;
+}
+
+.docs-content :deep(h1) {
+  @apply header-text-bold text-3xl text-teal-400 mb-4;
+}
+
+.docs-content :deep(h2) {
+  @apply text-xl font-bold text-slate-200 mt-10 mb-3 pb-2 border-b border-slate-800;
+}
+
+.docs-content :deep(h3) {
+  @apply text-base font-bold text-slate-200 mt-6 mb-2;
+}
+
+.docs-content :deep(p) {
+  @apply text-sm text-slate-400 leading-7 mb-4;
+}
+
+.docs-content :deep(ul),
+.docs-content :deep(ol) {
+  @apply text-sm text-slate-400 leading-7 mb-4 pl-5 space-y-1;
+}
+
+.docs-content :deep(ul) {
+  @apply list-disc;
+}
+
+.docs-content :deep(ol) {
+  @apply list-decimal;
+}
+
+.docs-content :deep(a) {
+  @apply text-teal-400 hover:text-teal-300 transition-colors;
+}
+
+.docs-content :deep(code) {
+  @apply text-teal-300 bg-slate-900 px-1.5 py-0.5 rounded text-xs;
+}
+
+.docs-content :deep(pre) {
+  @apply bg-slate-900 border border-slate-800 rounded-lg p-4 mb-4 overflow-x-auto;
+}
+
+.docs-content :deep(pre code) {
+  @apply bg-transparent p-0 text-slate-200;
+}
+
+.docs-content :deep(blockquote) {
+  @apply border-l-2 border-teal-500/50 pl-4 text-slate-500 italic mb-4;
+}
+
+.docs-content :deep(hr) {
+  @apply border-slate-800 my-8;
+}
+
+.docs-content :deep(table) {
+  @apply w-full text-sm text-slate-400 mb-4 border-collapse;
+}
+
+.docs-content :deep(th),
+.docs-content :deep(td) {
+  @apply border border-slate-800 px-3 py-2 text-left;
+}
+
+.docs-content :deep(th) {
+  @apply text-slate-200 bg-slate-900;
 }
 </style>
