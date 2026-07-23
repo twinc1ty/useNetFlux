@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useNetFlux, type HttpMethod, type ApiResponse } from "~/composable/useNetFlux";
+import { parseCurl, type ParsedCurl } from "~/composable/useCurlParser";
 
 export type RequestTab = "params" | "headers" | "body" | "settings";
 export type ResponseTab = "pretty" | "raw" | "headers";
@@ -125,6 +126,44 @@ export const usePlaygroundStoreOpt = defineStore("playground", () => {
     requestHistory.value = [];
   }
 
+  function importFromCurl(parsed: ParsedCurl) {
+    endpoint.value = parsed.endpoint;
+    if (parsed.method && httpMethods.includes(parsed.method as HttpMethod)) {
+      method.value = parsed.method as HttpMethod;
+    }
+
+    if (parsed.headers.length) {
+      headers.value = parsed.headers.map((h, idx) => ({
+        id: `curl-h${idx}-${Date.now()}`,
+        key: h.key,
+        value: h.value,
+        enabled: true,
+      }));
+    }
+
+    if (parsed.queryParams.length) {
+      queryParams.value = parsed.queryParams.map((p, idx) => ({
+        id: `curl-p${idx}-${Date.now()}`,
+        key: p.key,
+        value: p.value,
+        enabled: true,
+      }));
+    }
+
+    body.value = parsed.body;
+
+    if (parsed.body && ["POST", "PUT", "PATCH", "DELETE"].includes(parsed.method)) {
+      activeRequestTab.value = "body";
+    } else if (parsed.queryParams.length) {
+      activeRequestTab.value = "params";
+    } else if (parsed.headers.length) {
+      activeRequestTab.value = "headers";
+    }
+
+    response.value = null;
+    requestError.value = null;
+  }
+
   // Keep globalConfig.logging in sync with settings
   watch(() => settings.value.logging, (val) => {
     updateGlobalConfig({ logging: val });
@@ -229,6 +268,8 @@ export const usePlaygroundStoreOpt = defineStore("playground", () => {
     setMethod,
     loadFromHistory,
     clearHistory,
+    importFromCurl,
+    parseCurl,
     sendRequest,
     updateGlobalConfig,
   };
